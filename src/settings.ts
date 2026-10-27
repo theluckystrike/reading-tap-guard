@@ -1,7 +1,7 @@
 import { PluginSettingTab, type SettingDefinitionItem } from 'obsidian';
 import { sponsorsSettingItems } from './license/github-obsidian';
 import { helloSettingItems } from './hello/settings';
-import { PRO_UI, isPro } from './pro';
+import { PRO_INTERVAL, PRO_UI, isPro, proNotice } from './pro';
 import { CORE_INTERVAL_MS, clampInterval, type TapAction } from './taps';
 import type ReadingTapGuardPlugin from './main';
 
@@ -69,7 +69,6 @@ export class ReadingTapGuardSettingTab extends PluginSettingTab {
 					key: 'intervalText',
 					defaultValue: String(DEFAULT_SETTINGS.interval),
 					options: { ...INTERVALS },
-					disabled: () => !isPro(),
 				},
 			},
 			{
@@ -84,11 +83,21 @@ export class ReadingTapGuardSettingTab extends PluginSettingTab {
 	}
 
 	getControlValue(key: string): unknown {
-		if (key === 'intervalText') return String(this.plugin.settings.interval);
+		// A free user sees the interval in effect: 500 ms. The stored choice stays for the time that Pro comes back.
+		if (key === 'intervalText') return String(isPro() ? this.plugin.settings.interval : CORE_INTERVAL_MS);
 		return super.getControlValue(key);
 	}
 
 	async setControlValue(key: string, value: unknown): Promise<void> {
+		if (key === 'intervalText' && !isPro()) {
+			// A free user selected the Pro interval: tell how to get Pro and save nothing. Move the focus out, then draw
+			// the tab again, so the dropdown shows 500 ms (Obsidian does not draw a focused control again).
+			proNotice(PRO_INTERVAL);
+			const active = this.containerEl.ownerDocument.activeElement as HTMLElement | null;
+			if (active && this.containerEl.contains(active)) active.blur();
+			this.update();
+			return;
+		}
 		if (key === 'intervalText') {
 			this.plugin.settings.interval = clampInterval(Number(value));
 			await this.plugin.saveSettings();
