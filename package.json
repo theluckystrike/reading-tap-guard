@@ -1,6 +1,6 @@
 {
 	"name": "reading-tap-guard",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"private": true,
 	"description": "Stops a double tap in Reading view on phone and tablet from switching the note to editing, with a setting for what a double tap does.",
 	"main": "main.js",

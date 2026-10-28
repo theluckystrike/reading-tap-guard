@@ -1,5 +1,5 @@
-import { PluginSettingTab, type SettingDefinitionItem } from 'obsidian';
-import { sponsorsSettingItems } from './license/github-obsidian';
+import { PluginSettingTab, type Notice, type SettingDefinitionItem } from 'obsidian';
+import { sponsorsSettingItems, redrawKeepFocus } from './license/github-obsidian';
 import { helloSettingItems } from './hello/settings';
 import { PRO_INTERVAL, PRO_UI, isPro, proNotice } from './pro';
 import { CORE_INTERVAL_MS, clampInterval, type TapAction } from './taps';
@@ -42,6 +42,9 @@ const INTERVALS: Record<string, string> = {
 };
 
 export class ReadingTapGuardSettingTab extends PluginSettingTab {
+	/** The last Pro notice of this tab and its lead. The same notice does not show again while it is open. */
+	private notice: Notice | null = null;
+	private noticeLead = '';
 	plugin: ReadingTapGuardPlugin;
 
 	constructor(app: ConstructorParameters<typeof PluginSettingTab>[0], plugin: ReadingTapGuardPlugin) {
@@ -92,10 +95,13 @@ export class ReadingTapGuardSettingTab extends PluginSettingTab {
 		if (key === 'intervalText' && !isPro()) {
 			// A free user selected the Pro interval: tell how to get Pro and save nothing. Move the focus out, then draw
 			// the tab again, so the dropdown shows 500 ms (Obsidian does not draw a focused control again).
-			proNotice(PRO_INTERVAL);
-			const active = this.containerEl.ownerDocument.activeElement as HTMLElement | null;
-			if (active && this.containerEl.contains(active)) active.blur();
-			this.update();
+			// One notice at a time for the same Pro setting: a repeated key on the focused control adds no new notice.
+			const noticeLead = PRO_INTERVAL;
+			if (!this.notice?.messageEl.isConnected || this.noticeLead !== noticeLead) {
+				this.notice = proNotice(noticeLead);
+				this.noticeLead = noticeLead;
+			}
+			redrawKeepFocus(this);
 			return;
 		}
 		if (key === 'intervalText') {
