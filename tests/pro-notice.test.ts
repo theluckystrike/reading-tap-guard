@@ -8,7 +8,7 @@ import manifest from '../manifest.json';
 
 // A free user can select Double tap interval. The select shows the shared Pro notice with the "Sponsor on GitHub"
 // button. Nothing is saved, and the dropdown shows the interval in effect: 500 ms.
-const PITCH = 'Sponsor on GitHub, then sign in from the plugin settings.';
+const PITCH = 'One payment turns on Pro in every NoteMods plugin. Sponsor on GitHub, then sign in from the plugin settings.';
 
 function fakePro(pro: boolean): SponsorsManager {
 	return {
